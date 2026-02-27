@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Management System</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #5f2c82, #49a09d);
+      overflow: hidden;
+    }
+
+    /* Floating Shapes */
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.2;
+      animation: float 6s infinite ease-in-out alternate;
+    }
+
+    .circle1 {
+      width: 250px;
+      height: 250px;
+      background: #ffffff;
+      top: -50px;
+      left: -50px;
+    }
+
+    .circle2 {
+      width: 200px;
+      height: 200px;
+      background: #ffffff;
+      bottom: -40px;
+      right: -40px;
+      animation-delay: 2s;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0px); }
+      to { transform: translateY(30px); }
+    }
+
+    /* Glass Card */
+    .container {
+      width: 900px;
+      height: 520px;
+      display: flex;
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Left Section */
+    .left {
+      width: 50%;
+      background: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=60') no-repeat center center/cover;
+      padding: 60px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .left::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .left-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .left h1 {
+      font-size: 34px;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .left p {
+      font-size: 15px;
+      line-height: 1.7;
+      opacity: 0.9;
+    }
+
+    /* Right Section */
+    .right {
+      width: 50%;
+      padding: 70px 60px;
+      background: rgba(255,255,255,0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .right h2 {
+      font-size: 22px;
+      margin-bottom: 30px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      outline: none;
+      transition: 0.3s;
+      background: #f9fafb;
+    }
+
+    input:focus, select:focus {
+      border-color: #5f2c82;
+      box-shadow: 0 0 8px rgba(95,44,130,0.3);
+      background: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #5f2c82, #49a09d);
+      border: none;
+      color: white;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      opacity: 0.9;
+    }
+
+    .footer {
+      font-size: 12px;
+      margin-top: 18px;
+      color: #888;
+      text-align: center;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="circle circle1"></div>
+  <div class="circle circle2"></div>
+
+  <div class="container">
+
+    <div class="left">
+      <div class="left-content">
+        <h1>Event Management System</h1>
+        <p>
+          Organize college events, manage competitions,
+          and streamline student participation in one powerful platform.
+          <br><br>
+          Smart • Efficient • Professional
+        </p>
+      </div>
+    </div>
+
+    <div class="right">
+      <h2>Sign in to continue</h2>
+
+      <div class="input-group">
+        <label>Select Role</label>
+        <select id="role">
+          <option value="">Choose role</option>
+          <option value="admin">Admin</option>
+          <option value="student">Student</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" placeholder="Enter username">
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" placeholder="Enter password">
+      </div>
+
+      <button onclick="login()">Login</button>
+
+      <div class="footer">
+        © 2026 College Event Management System
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function login() {
+
+  const role = document.getElementById("role").value;
+  const username = document.querySelector("input[type='text']").value;
+  const password = document.querySelector("input[type='password']").value;
+
+  if(!role || !username || !password){
+    alert("Please fill all fields");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('*')
+    .eq('username', username)
+    .eq('password', password)
+    .eq('role', role)
+    .single();
+
+  if(error || !data){
+    alert("Invalid credentials");
+    return;
+  }
+
+  if(role === "admin"){
+    window.location.href = "admin-dashboard.html";
+  } else {
+    window.location.href = "student-dashboard.html";
+  }
+}
+</script>
+
+</body>
+</html>

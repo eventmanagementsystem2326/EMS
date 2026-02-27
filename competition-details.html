@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Competition Details</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  font-family:'Inter',sans-serif;
+  padding:40px;
+  background:#f4f6f9;
+  text-align:center;
+}
+.box{
+  background:#e8d9f3;
+  padding:40px;
+  border-radius:12px;
+  margin:30px auto;
+  max-width:600px;
+  text-align:left;
+}
+button{
+  padding:10px 22px;
+  margin:10px;
+  background:#5f2c82;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{opacity:0.9;}
+.detail p{
+  margin:8px 0;
+}
+img{
+  max-width:100%;
+  margin-top:10px;
+  border-radius:8px;
+}
+iframe{
+  width:100%;
+  height:400px;
+  margin-top:10px;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2 id="title"></h2>
+
+<div class="box detail" id="details"></div>
+
+<button onclick="goRegister()">Register</button>
+<button onclick="history.back()">Back</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://oszgllewojvqcbehrtub.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0"
+);
+
+const id = new URLSearchParams(window.location.search).get("id");
+let competitionType = "Individual";
+
+function renderFile(url){
+
+  if(!url) return "Rules not available";
+
+  const lower = url.toLowerCase();
+
+  if(lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png")){
+    return `<img src="${url}" alt="Rules Image">`;
+  }
+
+  if(lower.endsWith(".pdf")){
+    return `<iframe src="${url}"></iframe>`;
+  }
+
+  return `<a href="${url}" target="_blank">Download Rules File</a>`;
+}
+
+async function load(){
+
+  const { data } =
+    await supabaseClient
+      .from("competitions")
+      .select("*")
+      .eq("id",id)
+      .single();
+
+  document.getElementById("title").innerText = data.theme;
+  competitionType = data.competition_type;
+
+  document.getElementById("details").innerHTML = `
+    <p><strong>Competition Type:</strong> ${data.competition_type}</p>
+    <p><strong>Date:</strong> ${data.competitionDate || "-"}</p>
+    <p><strong>Time:</strong> ${data.time || "-"}</p>
+    <p><strong>Venue:</strong> ${data.venue || "-"}</p>
+    <p><strong>Faculty Coordinator:</strong> ${data.facultyCoordinator || "-"}</p>
+    <p><strong>Student Coordinator:</strong> ${data.studentCoordinator || "-"}</p>
+    <p><strong>Rules & Regulations:</strong></p>
+    ${renderFile(data.rulesLink)}
+  `;
+}
+
+function goRegister(){
+  window.location.href =
+    "registration.html?id=" + id +
+    "&type=" + competitionType;
+}
+
+load();
+
+</script>
+
+</body>
+</html>

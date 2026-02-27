@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Competitions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    body{display:flex;height:100vh;background:#f4f6f9;}
+    .sidebar{width:240px;background:linear-gradient(180deg,#5f2c82,#49a09d);color:white;padding:30px 20px;}
+    .sidebar h2{margin-bottom:40px;}
+    .sidebar a{display:block;color:white;text-decoration:none;margin-bottom:15px;padding:10px;border-radius:8px;}
+    .sidebar a:hover{background:rgba(255,255,255,0.2);}
+    .main{flex:1;padding:40px;overflow:auto;}
+    h1{margin-bottom:20px;}
+    .form{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.05);margin-bottom:30px;}
+    input,select,textarea{width:100%;padding:10px;margin-bottom:15px;border-radius:8px;border:1px solid #ddd;}
+    textarea{resize:vertical;min-height:60px;}
+    button{padding:8px 14px;background:#5f2c82;color:white;border:none;border-radius:6px;cursor:pointer;margin-right:5px;}
+    button:hover{opacity:0.9;}
+    table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:left;}
+    th{background:#f4f6f9;}
+    a.download{color:#5f2c82;font-weight:600;text-decoration:none;}
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Admin Panel</h2>
+  <a href="admin-dashboard.html">Dashboard</a>
+  <a href="manage-events.html">Manage Events</a>
+  <a href="manage-competitions.html">Manage Competitions</a>
+  <a href="manage-homescreen.html">Manage Highlights</a>
+  <a href="#">View Registrations</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<div class="main">
+  <h1>Manage Competitions</h1>
+
+  <div class="form">
+    <input type="text" id="theme" placeholder="Competition Theme">
+
+    <select id="competitionType" required>
+      <option value="Individual">Individual</option>
+      <option value="Group">Group</option>
+    </select>
+
+    <!-- Team Limit (NEW) -->
+    <div id="teamLimitContainer" style="display:none;">
+      <input type="number" id="teamLimit" placeholder="Team Member Limit">
+    </div>
+
+    <select id="category">
+      <option value="">Select Internal / External</option>
+      <option value="Internal">Internal</option>
+      <option value="External">External</option>
+    </select>
+
+    <div id="clubContainer">
+      <select id="club">
+        <option value="">Select Club</option>
+        <option value="Coding Club">Coding Club</option>
+        <option value="Cultural Club">Cultural Club</option>
+        <option value="Sports Club">Sports Club</option>
+        <option value="Management Club">Management Club</option>
+      </select>
+    </div>
+
+    <select id="eventSelect">
+      <option value="">Select Event</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <input type="text" id="otherEventInput" placeholder="Enter Other Event Name" style="display:none;">
+
+    <input type="date" id="competitionDate">
+    <input type="text" id="venue" placeholder="Venue (Optional)">
+    <textarea id="facultyCoordinator" placeholder="Faculty Coordinator Names"></textarea>
+    <textarea id="studentCoordinator" placeholder="Student Coordinator Names (Optional)"></textarea>
+    <input type="file" id="rulesFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+
+    <button id="submitBtn">Add Competition</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Theme</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Club</th>
+        <th>Event</th>
+        <th>Date</th>
+        <th>Venue</th>
+        <th>Faculty Coordinator</th>
+        <th>Student Coordinator</th>
+        <th>Rules</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="competitionTable"></tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+let editId = null;
+
+/* Show team limit only for Group */
+document.getElementById("competitionType").addEventListener("change", function(){
+  const teamBox = document.getElementById("teamLimitContainer");
+  if(this.value === "Group"){
+    teamBox.style.display = "block";
+  } else {
+    teamBox.style.display = "none";
+    document.getElementById("teamLimit").value="";
+  }
+});
+
+/* Hide club if External */
+document.getElementById("category").addEventListener("change", function(){
+  const clubContainer = document.getElementById("clubContainer");
+  if(this.value === "External"){
+    clubContainer.style.display = "none";
+    document.getElementById("club").value="";
+  } else {
+    clubContainer.style.display = "block";
+  }
+});
+
+/* Show textbox if Other selected */
+document.getElementById("eventSelect").addEventListener("change", function(){
+  const otherInput = document.getElementById("otherEventInput");
+  if(this.value === "Other"){
+    otherInput.style.display = "block";
+  } else {
+    otherInput.style.display = "none";
+    otherInput.value="";
+  }
+});
+
+/* ADD / UPDATE */
+document.getElementById("submitBtn").addEventListener("click", async () => {
+
+  const theme = document.getElementById("theme").value;
+  const competition_type = document.getElementById("competitionType").value;
+  const team_limit =
+    competition_type === "Group"
+    ? document.getElementById("teamLimit").value
+    : null;
+
+  const category = document.getElementById("category").value;
+  const club = document.getElementById("club").value;
+
+  let eventId = document.getElementById("eventSelect").value;
+  const otherEvent = document.getElementById("otherEventInput").value;
+  if(eventId === "Other") eventId = otherEvent;
+
+  const competitionDate = document.getElementById("competitionDate").value;
+  const venue = document.getElementById("venue").value;
+  const facultyCoordinator = document.getElementById("facultyCoordinator").value;
+  const studentCoordinator = document.getElementById("studentCoordinator").value;
+  let rulesLink = null;
+
+const rulesFile = document.getElementById("rulesFile").files[0];
+
+if(rulesFile){
+
+  const fileName = Date.now() + "_" + rulesFile.name;
+
+  const { data, error } = await supabaseClient
+    .storage
+    .from("rules")
+    .upload(fileName, rulesFile);
+
+  if(error){
+    alert("Error uploading rules file");
+    return;
+  }
+
+  const { data: publicUrl } = supabaseClient
+    .storage
+    .from("rules")
+    .getPublicUrl(fileName);
+
+  rulesLink = publicUrl.publicUrl;
+}
+
+  if(!theme || !category || !competitionDate){
+    alert("Please fill required fields");
+    return;
+  }
+
+  if(editId){
+    await supabaseClient.from("competitions")
+      .update({
+        theme, competition_type, team_limit,
+        category, club, eventId,
+        competitionDate, venue,
+        facultyCoordinator, studentCoordinator,
+        rulesLink
+      })
+      .eq("id", editId);
+
+    editId = null;
+    document.getElementById("submitBtn").innerText = "Add Competition";
+  } else {
+    await supabaseClient.from("competitions")
+      .insert([{
+        theme, competition_type, team_limit,
+        category, club, eventId,
+        competitionDate, venue,
+        facultyCoordinator, studentCoordinator,
+        rulesLink
+      }]);
+  }
+
+  alert("Competition Saved Successfully ✅");
+
+  document.querySelectorAll("input,select,textarea").forEach(el=>el.value="");
+  document.getElementById("otherEventInput").style.display="none";
+  document.getElementById("teamLimitContainer").style.display="none";
+
+  loadCompetitions();
+});
+
+/* LOAD TABLE */
+async function loadCompetitions(){
+
+  const { data } =
+    await supabaseClient.from("competitions").select("*");
+
+  const table = document.getElementById("competitionTable");
+  table.innerHTML="";
+
+  if(!data || data.length === 0){
+    table.innerHTML = `
+      <tr>
+        <td colspan="11" style="text-align:center;padding:20px;color:#888;">
+          No competitions available
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  data.forEach(c => {
+
+    const typeDisplay =
+      c.competition_type === "Group"
+        ? `Group (${c.team_limit || 0})`
+        : c.competition_type;
+
+    table.innerHTML += `
+      <tr>
+        <td>${c.theme}</td>
+        <td>${typeDisplay}</td>
+        <td>${c.category || "-"}</td>
+        <td>${c.club || "-"}</td>
+        <td>${c.eventId || "-"}</td>
+        <td>${c.competitionDate || "-"}</td>
+        <td>${c.venue || "-"}</td>
+        <td>${c.facultyCoordinator || "-"}</td>
+        <td>${c.studentCoordinator || "-"}</td>
+        <td>
+          ${c.rulesLink
+            ? `<a class="download" href="${c.rulesLink}" target="_blank">View</a>`
+            : "No Rules"}
+        </td>
+        <td>
+          <button onclick="editCompetition('${c.id}')">Edit</button>
+          <button onclick="deleteCompetition('${c.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* EDIT */
+window.editCompetition = async function(id){
+
+  const { data } =
+    await supabaseClient.from("competitions")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+  if(!data) return;
+
+  document.getElementById("theme").value = data.theme;
+  document.getElementById("competitionType").value = data.competition_type;
+  document.getElementById("category").value = data.category;
+  document.getElementById("club").value = data.club;
+  document.getElementById("competitionDate").value = data.competitionDate;
+  document.getElementById("venue").value = data.venue;
+  document.getElementById("facultyCoordinator").value = data.facultyCoordinator;
+  document.getElementById("studentCoordinator").value = data.studentCoordinator;
+  document.getElementById("rulesLink").value = data.rulesLink;
+
+  if(data.competition_type === "Group"){
+    document.getElementById("teamLimitContainer").style.display="block";
+    document.getElementById("teamLimit").value = data.team_limit;
+  }
+
+  if(document.querySelector(`#eventSelect option[value="${data.eventId}"]`)){
+    document.getElementById("eventSelect").value = data.eventId;
+    document.getElementById("otherEventInput").style.display="none";
+  } else {
+    document.getElementById("eventSelect").value="Other";
+    document.getElementById("otherEventInput").style.display="block";
+    document.getElementById("otherEventInput").value=data.eventId;
+  }
+
+  editId = id;
+  document.getElementById("submitBtn").innerText = "Update Competition";
+
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+
+/* DELETE */
+window.deleteCompetition = async function(id){
+  await supabaseClient.from("competitions").delete().eq("id", id);
+  loadCompetitions();
+};
+
+loadCompetitions();
+
+</script>
+</body>
+</html>

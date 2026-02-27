@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage HomeScreen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    body{display:flex;height:100vh;background:#f4f6f9;}
+
+    .sidebar{
+      width:240px;
+      background:linear-gradient(180deg,#5f2c82,#49a09d);
+      color:white;
+      padding:30px 20px;
+    }
+
+    .sidebar h2{margin-bottom:40px;}
+
+    .sidebar a{
+      display:block;
+      color:white;
+      text-decoration:none;
+      margin-bottom:15px;
+      padding:10px;
+      border-radius:8px;
+    }
+
+    .sidebar a:hover{
+      background:rgba(255,255,255,0.2);
+    }
+
+    .main{
+      flex:1;
+      padding:40px;
+      overflow:auto;
+    }
+
+    .form{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 5px 20px rgba(0,0,0,0.05);
+      margin-bottom:30px;
+    }
+
+    input{
+      width:100%;
+      padding:10px;
+      margin-bottom:15px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+
+    button{
+      padding:8px 14px;
+      background:#5f2c82;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    .highlight-list img{
+      width:150px;
+      border-radius:8px;
+      margin-right:15px;
+    }
+
+    .highlight-item{
+      display:flex;
+      align-items:center;
+      margin-bottom:15px;
+      background:white;
+      padding:10px;
+      border-radius:10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Admin Panel</h2>
+  <a href="admin-dashboard.html">Dashboard</a>
+  <a href="manage-events.html">Manage Events</a>
+  <a href="manage-competitions.html">Manage Competitions</a>
+  <a href="manage-homescreen.html">Manage Highlights</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<div class="main">
+  <h1>Manage Highlights</h1>
+
+  <div class="form">
+    <input type="text" id="title" placeholder="Highlight Title">
+    <input type="text" id="imageUrl" placeholder="Paste Image URL (Firebase Storage or Drive)">
+    <button id="addBtn">Add Highlight</button>
+  </div>
+
+  <div id="highlightList" class="highlight-list"></div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBjMaDtyUVCi2zkjF3jn8Gv8wSg3nvLtxo",
+  authDomain: "event-management-system-bdd21.firebaseapp.com",
+  projectId: "event-management-system-bdd21",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const highlightsCollection = collection(db,"highlights");
+
+document.getElementById("addBtn").addEventListener("click", async ()=>{
+
+  const title = document.getElementById("title").value;
+  const imageUrl = document.getElementById("imageUrl").value;
+
+  if(!title || !imageUrl){
+    alert("Fill all fields");
+    return;
+  }
+
+  await addDoc(highlightsCollection,{
+    title,
+    imageUrl
+  });
+
+  alert("Highlight Added ✅");
+  document.getElementById("title").value="";
+  document.getElementById("imageUrl").value="";
+  loadHighlights();
+});
+
+async function loadHighlights(){
+  const snapshot = await getDocs(highlightsCollection);
+  const container = document.getElementById("highlightList");
+  container.innerHTML="";
+
+  snapshot.forEach(docItem=>{
+    const h = docItem.data();
+
+    container.innerHTML+=`
+      <div class="highlight-item">
+        <img src="${h.imageUrl}">
+        <div>
+          <h4>${h.title}</h4>
+          <button onclick="deleteHighlight('${docItem.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+window.deleteHighlight = async (id)=>{
+  await deleteDoc(doc(db,"highlights",id));
+  loadHighlights();
+};
+
+loadHighlights();
+
+</script>
+
+</body>
+</html>

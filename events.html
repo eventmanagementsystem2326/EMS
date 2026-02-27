@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    body{background:#f4f6f9;}
+
+    .navbar{
+      width:100%;
+      background:linear-gradient(135deg,#5f2c82,#49a09d);
+      padding:15px 40px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:white;
+    }
+
+    .logo{font-size:18px;font-weight:600;}
+
+    .nav-links a{
+      text-decoration:none;
+      color:white;
+      margin-left:25px;
+      font-size:14px;
+      font-weight:500;
+    }
+
+    .container{
+      padding:40px 80px;
+      text-align:center;
+    }
+
+    h2{margin-bottom:25px;}
+
+    /* FILTERS */
+    .filters{
+      display:flex;
+      justify-content:center;
+      gap:20px;
+      background:#e8d9f3;
+      padding:15px;
+      border-radius:12px;
+      width:fit-content;
+      margin:0 auto 40px auto;
+    }
+
+    .filter-btn{
+      padding:8px 24px;
+      border-radius:8px;
+      border:2px solid #5f2c82;
+      background:white;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .filter-btn.active{
+      background:#5f2c82;
+      color:white;
+    }
+
+    /* GRID */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:25px;
+      margin-top:20px;
+    }
+
+    /* CARD — matches upcoming section */
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 5px 15px rgba(0,0,0,0.05);
+      text-align:left;
+      transition:.25s;
+    }
+
+    .card:hover{
+      transform:translateY(-5px);
+    }
+
+    .tag{
+      display:inline-block;
+      font-size:11px;
+      font-weight:600;
+      background:#eee;
+      padding:4px 10px;
+      border-radius:20px;
+      margin-bottom:8px;
+    }
+
+    .card h3{
+      color:#5f2c82;
+      margin-bottom:8px;
+      font-size:16px;
+    }
+
+    .card p{
+      font-size:13px;
+      margin-bottom:4px;
+      color:#555;
+    }
+
+    .deadline{
+      font-size:12px;
+      font-weight:600;
+      color:#e63946;
+      margin-top:6px;
+    }
+
+    .view-btn{
+      margin-top:12px;
+      padding:6px 16px;
+      background:#7b3db8;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    .view-btn:hover{opacity:.9;}
+  </style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <div class="logo">🎓 College Logo</div>
+  <div class="nav-links">
+    <a href="student-dashboard.html">Home</a>
+    <a href="events.html">Events</a>
+    <a href="#">Status</a>
+    <a href="#">Contact Us</a>
+    <a href="login.html">Logout</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <h2>Event Page</h2>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('ALL', this)">ALL</button>
+    <button class="filter-btn" onclick="setFilter('Internal', this)">INTERNAL</button>
+    <button class="filter-btn" onclick="setFilter('External', this)">EXTERNAL</button>
+  </div>
+
+  <div class="grid" id="cardGrid"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseClient = supabase.createClient(
+  "https://oszgllewojvqcbehrtub.supabase.co",
+ "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0"
+
+);
+
+let allData = [];
+let currentFilter = "ALL";
+
+/* DEADLINE CALC (same as dashboard) */
+function calculateDeadline(dateValue){
+  const today = new Date();
+  const eventDate = new Date(dateValue);
+
+  const diffTime = eventDate - today;
+  const diffDays = Math.ceil(diffTime / (1000*60*60*24));
+
+  if(diffDays === 0) return "Today";
+  if(diffDays === 1) return "Tomorrow";
+  if(diffDays > 1) return diffDays + " Days Left";
+  return "Completed";
+}
+
+/* LOAD DATA */
+async function loadData(){
+
+  const { data: events } =
+    await supabaseClient.from("events").select("*");
+
+  const { data: competitions } =
+    await supabaseClient.from("competitions").select("*");
+
+  allData = [];
+
+  if(events){
+    events.forEach(e=>{
+      allData.push({
+        ...e,
+        type:"Event",
+        displayDate: e.date
+      });
+    });
+  }
+
+  if(competitions){
+    competitions.forEach(c=>{
+      allData.push({
+        ...c,
+        type:"Competition",
+        displayDate: c.competitionDate   // ✅ FIXED
+      });
+    });
+  }
+
+  renderCards();
+}
+
+/* FILTER */
+function setFilter(type, btn){
+  currentFilter = type;
+
+  document.querySelectorAll(".filter-btn")
+    .forEach(b=>b.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  renderCards();
+}
+
+/* RENDER */
+function renderCards(){
+
+  const grid = document.getElementById("cardGrid");
+  grid.innerHTML="";
+
+  const filtered = allData.filter(item=>{
+    if(currentFilter === "ALL") return true;
+    return item.category === currentFilter;
+  });
+
+  if(filtered.length === 0){
+    grid.innerHTML="<p>No data available</p>";
+    return;
+  }
+
+  filtered.forEach(item=>{
+
+    const card = document.createElement("div");
+    card.className="card";
+
+    card.innerHTML=`
+      <div class="tag">${item.type}</div>
+      <h3>${item.theme}</h3>
+      <p><strong>Date:</strong> ${item.displayDate || "-"}</p>
+      <p><strong>Venue:</strong> ${item.venue || "-"}</p>
+      ${item.type==="Event"
+        ? `<p><strong>Audience:</strong> ${item.audience || "All Students"}</p>`
+        : ""
+      }
+      <div class="deadline">${calculateDeadline(item.displayDate)}</div>
+      <button class="view-btn"
+        onclick="viewItem('${item.id}','${item.type}')">
+        View
+      </button>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+/* VIEW */
+function viewItem(id,type){
+  if(type === "Competition"){
+    window.location.href = "competition-details.html?id="+id;
+  } else {
+    window.location.href = "event-details.html?id="+id;
+  }
+}
+
+loadData();
+</script>
+
+</body>
+</html>

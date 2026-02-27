@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Events</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    body{display:flex;height:100vh;background:#f4f6f9;}
+    .sidebar{width:240px;background:linear-gradient(180deg,#5f2c82,#49a09d);color:white;padding:30px 20px;}
+    .sidebar h2{margin-bottom:40px;}
+    .sidebar a{display:block;color:white;text-decoration:none;margin-bottom:15px;padding:10px;border-radius:8px;}
+    .sidebar a:hover{background:rgba(255,255,255,0.2);}
+    .main{flex:1;padding:40px;overflow:auto;}
+    h1{margin-bottom:20px;}
+    .form{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.05);margin-bottom:30px;}
+    input,select{width:100%;padding:10px;margin-bottom:15px;border-radius:8px;border:1px solid #ddd;}
+    button{padding:8px 14px;background:#5f2c82;color:white;border:none;border-radius:6px;cursor:pointer;margin-right:5px;}
+    button:hover{opacity:0.9;}
+    table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;}
+    th,td{padding:12px;border-bottom:1px solid #eee;text-align:left;}
+    th{background:#f4f6f9;}
+    a.download{color:#5f2c82;font-weight:600;text-decoration:none;}
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Admin Panel</h2>
+  <a href="admin-dashboard.html">Dashboard</a>
+  <a href="manage-events.html">Manage Events</a>
+  <a href="manage-competitions.html">Manage Competitions</a>
+  <a href="manage-homescreen.html">Manage Highlights</a>
+  <a href="#">View Registrations</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<div class="main">
+  <h1>Manage Events</h1>
+
+  <div class="form">
+
+    <input type="text" id="theme" placeholder="Event Theme">
+
+    <select id="category">
+      <option value="">Select Internal / External</option>
+      <option value="Internal">Internal</option>
+      <option value="External">External</option>
+    </select>
+
+    <div id="clubContainer">
+      <select id="club">
+        <option value="">Select Club</option>
+        <option value="Coding Club">Coding Club</option>
+        <option value="Cultural Club">Cultural Club</option>
+        <option value="Sports Club">Sports Club</option>
+        <option value="Management Club">Management Club</option>
+      </select>
+    </div>
+
+    <input type="date" id="date">
+    <input type="text" id="time" placeholder="Select Time" onfocus="(this.type='time')">
+
+    <input type="text" id="venue" placeholder="Venue">
+    <input type="text" id="resourcePerson" placeholder="Resource Person Name (Optional)">
+
+    <select id="audience">
+      <option value="">Select Target Audience</option>
+      <option value="1st BCA">1st BCA</option>
+      <option value="2nd BCA">2nd BCA</option>
+      <option value="3rd BCA">3rd BCA</option>
+      <option value="BCA">BCA</option>
+      <option value="1st BCOM">1st BCOM</option>
+      <option value="2nd BCOM">2nd BCOM</option>
+      <option value="3rd BCOM">3rd BCOM</option>
+      <option value="BCOM">BCOM</option>
+      <option value="All Students">All Students</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <input type="text" id="otherAudience" placeholder="Enter Custom Audience" style="display:none;">
+
+    <input type="file" id="brochureFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+
+    <button id="submitBtn">Add Event</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Theme</th>
+        <th>Resource Person</th>
+        <th>Category</th>
+        <th>Club</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Venue</th>
+        <th>Audience</th>
+        <th>Brochure</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="eventTable"></tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+let editId = null;
+
+document.getElementById("category").addEventListener("change", function(){
+  document.getElementById("clubContainer").style.display =
+  this.value === "External" ? "none" : "block";
+});
+
+document.getElementById("audience").addEventListener("change", function(){
+  const otherInput = document.getElementById("otherAudience");
+  if(this.value === "Other"){
+    otherInput.style.display = "block";
+  } else {
+    otherInput.style.display = "none";
+    otherInput.value = "";
+  }
+});
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+
+  const theme = document.getElementById("theme").value;
+  const category = document.getElementById("category").value;
+  const club = document.getElementById("club").value;
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const venue = document.getElementById("venue").value;
+  const resourcePerson = document.getElementById("resourcePerson").value;
+
+  let audience = document.getElementById("audience").value;
+  const otherAudience = document.getElementById("otherAudience").value;
+  if(audience === "Other"){ audience = otherAudience; }
+
+  let brochureLink = null;
+  const brochureFile = document.getElementById("brochureFile").files[0];
+
+  if(brochureFile){
+    const fileName = Date.now() + "_" + brochureFile.name;
+
+    const { error } = await supabaseClient
+      .storage
+      .from("brochures")
+      .upload(fileName, brochureFile, { upsert: true });
+
+    if(error){
+      alert("Error uploading brochure");
+      return;
+    }
+
+    const { data: publicUrl } = supabaseClient
+      .storage
+      .from("brochures")
+      .getPublicUrl(fileName);
+
+    brochureLink = publicUrl.publicUrl;
+  }
+
+  if(!theme || !category || !date || !time || !venue){
+    alert("Please fill required fields");
+    return;
+  }
+
+  if(editId){
+    await supabaseClient
+      .from("events")
+      .update({theme,category,club,date,time,venue,resourcePerson,audience,brochureLink})
+      .eq("id", editId);
+
+    editId = null;
+    document.getElementById("submitBtn").innerText = "Add Event";
+  } else {
+    await supabaseClient
+      .from("events")
+      .insert([{theme,category,club,date,time,venue,resourcePerson,audience,brochureLink}]);
+  }
+
+  alert("Event Saved Successfully ✅");
+
+  document.querySelectorAll("input,select").forEach(el=>el.value="");
+  document.getElementById("otherAudience").style.display="none";
+
+  loadEvents();
+});
+
+async function loadEvents(){
+  const { data } = await supabaseClient.from("events").select("*");
+  const table = document.getElementById("eventTable");
+  table.innerHTML="";
+
+  if(!data || data.length === 0){
+    table.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:#888;">No events available</td></tr>`;
+    return;
+  }
+
+  data.forEach(e=>{
+    table.innerHTML+=`
+      <tr>
+        <td>${e.theme}</td>
+        <td>${e.resourcePerson || "-"}</td>
+        <td>${e.category}</td>
+        <td>${e.club || "-"}</td>
+        <td>${e.date}</td>
+        <td>${e.time}</td>
+        <td>${e.venue}</td>
+        <td>${e.audience || "-"}</td>
+        <td>
+          ${e.brochureLink
+          ? `<a class="download" href="${e.brochureLink}" target="_blank">View</a>`
+          : "No File"}
+        </td>
+        <td>
+          <button onclick="editEvent('${e.id}')">Edit</button>
+          <button onclick="deleteEvent('${e.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+window.editEvent = async function(id){
+  const { data } = await supabaseClient.from("events").select("*").eq("id", id).single();
+  if(!data) return;
+
+  document.getElementById("theme").value = data.theme;
+  document.getElementById("category").value = data.category;
+  document.getElementById("club").value = data.club;
+  document.getElementById("date").value = data.date;
+  document.getElementById("time").value = data.time;
+  document.getElementById("venue").value = data.venue;
+  document.getElementById("resourcePerson").value = data.resourcePerson;
+
+  if(document.querySelector(`#audience option[value="${data.audience}"]`)){
+    document.getElementById("audience").value = data.audience;
+    document.getElementById("otherAudience").style.display="none";
+  } else {
+    document.getElementById("audience").value="Other";
+    document.getElementById("otherAudience").style.display="block";
+    document.getElementById("otherAudience").value=data.audience;
+  }
+
+  editId = id;
+  document.getElementById("submitBtn").innerText = "Update Event";
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+
+window.deleteEvent = async function(id){
+  await supabaseClient.from("events").delete().eq("id", id);
+  loadEvents();
+};
+
+loadEvents();
+
+</script>
+
+</body>
+</html>

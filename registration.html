@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  font-family:'Inter',sans-serif;
+  background:#f4f6f9;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.form-box{
+  background:#e8d9f3;
+  padding:40px;
+  border-radius:12px;
+  width:350px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
+input, select{
+  width:100%;
+  padding:8px;
+  margin:8px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+button{
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  margin-top:10px;
+  width:100%;
+}
+.submit-btn{background:#5f2c82;color:white;}
+.cancel-btn{background:#999;color:white;}
+</style>
+</head>
+
+<body>
+
+<div class="form-box">
+<h2>Student Registration</h2>
+
+<form id="regForm">
+
+<input id="name" placeholder="Student Name" required>
+<input id="regno" placeholder="Register Number" required>
+
+<select id="dept" required>
+  <option value="">Select Department</option>
+  <option value="BCom">BCom</option>
+  <option value="BCA">BCA</option>
+</select>
+
+<select id="sem" required>
+  <option value="">Select Semester</option>
+  <option value="First">First</option>
+  <option value="Second">Second</option>
+  <option value="Third">Third</option>
+</select>
+
+<input id="email" placeholder="Email" required>
+<input id="contact" placeholder="Contact Number" required>
+
+<div id="groupFields"></div>
+
+<button type="submit" class="submit-btn">Submit</button>
+<button type="button" class="cancel-btn" onclick="history.back()">Cancel</button>
+
+</form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://oszgllewojvqcbehrtub.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0"
+);
+
+const params = new URLSearchParams(window.location.search);
+const competitionId = params.get("id");
+
+let competitionType="";
+let teamLimit=0;
+
+/* Disable Button */
+function disableRegistration(){
+  const btn = document.querySelector(".submit-btn");
+  btn.disabled = true;
+  btn.innerText = "Already Registered";
+  btn.style.background = "gray";
+}
+
+/* Load competition */
+async function loadCompetition(){
+
+  const { data, error } =
+    await supabaseClient
+      .from("competitions")
+      .select("*")
+      .eq("id", competitionId)
+      .single();
+
+  if(error || !data){
+    alert("Competition not found");
+    return;
+  }
+
+  competitionType = data.competition_type;
+  teamLimit = data.team_limit;
+
+  if(competitionType === "Group"){
+    createTeamFields(teamLimit);
+  }
+}
+
+/* Create team member fields
+   Registering student = 1 member
+*/
+function createTeamFields(limit){
+
+  const container =
+    document.getElementById("groupFields");
+
+  container.innerHTML = "";
+
+  const additionalMembers = limit - 1;
+
+  for(let i=1; i<=additionalMembers; i++){
+    container.innerHTML += `
+      <input placeholder="Member ${i} Name"
+        id="memberName${i}" required>
+
+      <input placeholder="Member ${i} USN"
+        id="memberUsn${i}" required>
+    `;
+  }
+}
+
+/* Check duplicate when user enters regno */
+document.getElementById("regno").addEventListener("blur", async function(){
+
+  const regno = this.value;
+
+  if(!regno) return;
+
+  const { data: existing } =
+    await supabaseClient
+      .from("registrations")
+      .select("id")
+      .eq("competition_id", competitionId)
+      .eq("register_number", regno);
+
+  if(existing && existing.length > 0){
+    disableRegistration();
+  }
+});
+
+/* Submit */
+document.getElementById("regForm")
+.addEventListener("submit", async function(e){
+
+  e.preventDefault();
+
+  const regno =
+    document.getElementById("regno").value;
+
+  const { data: existing, error: checkError } =
+    await supabaseClient
+      .from("registrations")
+      .select("id")
+      .eq("competition_id", competitionId)
+      .eq("register_number", regno);
+
+  if(checkError){
+    alert("Error checking registration");
+    return;
+  }
+
+  if(existing && existing.length > 0){
+    disableRegistration();
+    alert("You already registered for this competition!");
+    return;
+  }
+
+  let members = [];
+
+  if(competitionType === "Group"){
+
+    members.push({
+      name: document.getElementById("name").value,
+      usn: regno
+    });
+
+    const additionalMembers = teamLimit - 1;
+
+    for(let i=1; i<=additionalMembers; i++){
+      members.push({
+        name: document.getElementById(`memberName${i}`).value,
+        usn: document.getElementById(`memberUsn${i}`).value
+      });
+    }
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("registrations")
+      .insert([{
+        competition_id: competitionId,
+        student_name: document.getElementById("name").value,
+        register_number: regno,
+        department: document.getElementById("dept").value,
+        semester: document.getElementById("sem").value,
+        email: document.getElementById("email").value,
+        contact_number: document.getElementById("contact").value,
+        team_members:
+          competitionType === "Group"
+          ? members
+          : null
+      }]);
+
+  if(error){
+    alert("Error registering");
+    return;
+  }
+
+  disableRegistration();
+
+  alert("Registered Successfully ✅");
+  window.location.href="student-dashboard.html";
+});
+
+loadCompetition();
+
+</script>
+</body>
+</html>
