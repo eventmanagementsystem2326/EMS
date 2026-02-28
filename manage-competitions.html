@@ -47,7 +47,6 @@
       <option value="Group">Group</option>
     </select>
 
-    <!-- Team Limit (NEW) -->
     <div id="teamLimitContainer" style="display:none;">
       <input type="number" id="teamLimit" placeholder="Team Member Limit">
     </div>
@@ -167,31 +166,37 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   const venue = document.getElementById("venue").value;
   const facultyCoordinator = document.getElementById("facultyCoordinator").value;
   const studentCoordinator = document.getElementById("studentCoordinator").value;
+
   let rulesLink = null;
+  const rulesFile = document.getElementById("rulesFile").files[0];
 
-const rulesFile = document.getElementById("rulesFile").files[0];
+  /* ✅ SAFE UPLOAD FIX */
+  if(rulesFile){
 
-if(rulesFile){
+    const cleanName = rulesFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
+    const fileName = Date.now() + "_" + cleanName;
 
-  const fileName = Date.now() + "_" + rulesFile.name;
+    const { error } = await supabaseClient
+      .storage
+      .from("rules")
+      .upload(fileName, rulesFile, {
+        upsert: true,
+        contentType: rulesFile.type
+      });
 
-  const { data, error } = await supabaseClient
-    .storage
-    .from("rules")
-    .upload(fileName, rulesFile);
+    if(error){
+      console.error("UPLOAD ERROR:", error);
+      alert("Error uploading rules file");
+      return;
+    }
 
-  if(error){
-    alert("Error uploading rules file");
-    return;
+    const { data: publicUrl } = supabaseClient
+      .storage
+      .from("rules")
+      .getPublicUrl(fileName);
+
+    rulesLink = publicUrl.publicUrl;
   }
-
-  const { data: publicUrl } = supabaseClient
-    .storage
-    .from("rules")
-    .getPublicUrl(fileName);
-
-  rulesLink = publicUrl.publicUrl;
-}
 
   if(!theme || !category || !competitionDate){
     alert("Please fill required fields");
@@ -199,19 +204,28 @@ if(rulesFile){
   }
 
   if(editId){
-    await supabaseClient.from("competitions")
-      .update({
-        theme, competition_type, team_limit,
-        category, club, eventId,
-        competitionDate, venue,
-        facultyCoordinator, studentCoordinator,
-        rulesLink
-      })
+
+    const updateData = {
+      theme, competition_type, team_limit,
+      category, club, eventId,
+      competitionDate, venue,
+      facultyCoordinator, studentCoordinator
+    };
+
+    if(rulesLink){
+      updateData.rulesLink = rulesLink;
+    }
+
+    await supabaseClient
+      .from("competitions")
+      .update(updateData)
       .eq("id", editId);
 
     editId = null;
     document.getElementById("submitBtn").innerText = "Add Competition";
+
   } else {
+
     await supabaseClient.from("competitions")
       .insert([{
         theme, competition_type, team_limit,
@@ -302,7 +316,6 @@ window.editCompetition = async function(id){
   document.getElementById("venue").value = data.venue;
   document.getElementById("facultyCoordinator").value = data.facultyCoordinator;
   document.getElementById("studentCoordinator").value = data.studentCoordinator;
-  document.getElementById("rulesLink").value = data.rulesLink;
 
   if(data.competition_type === "Group"){
     document.getElementById("teamLimitContainer").style.display="block";
