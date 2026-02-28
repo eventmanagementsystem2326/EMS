@@ -109,7 +109,6 @@
 
 const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
-
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let editId = null;
@@ -146,25 +145,35 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   let brochureLink = null;
   const brochureFile = document.getElementById("brochureFile").files[0];
 
+  /* ✅ SAFE UPLOAD */
   if(brochureFile){
-    const fileName = Date.now() + "_" + brochureFile.name;
+    try{
+      const cleanName = brochureFile.name.replace(/[^\w.\-]/g, "_");
+      const fileName = `${Date.now()}_${cleanName}`;
 
-    const { error } = await supabaseClient
-      .storage
-      .from("brochures")
-      .upload(fileName, brochureFile, { upsert: true });
+      const { error } = await supabaseClient
+        .storage
+        .from("brochures")
+        .upload(fileName, brochureFile, { upsert:true });
 
-    if(error){
-      alert("Error uploading brochure");
+      if(error){
+        console.error("Upload error:", error);
+        alert("Error uploading brochure");
+        return;
+      }
+
+      const { data } = supabaseClient
+        .storage
+        .from("brochures")
+        .getPublicUrl(fileName);
+
+      brochureLink = data.publicUrl;
+
+    }catch(err){
+      console.error("Upload exception:", err);
+      alert("Upload failed");
       return;
     }
-
-    const { data: publicUrl } = supabaseClient
-      .storage
-      .from("brochures")
-      .getPublicUrl(fileName);
-
-    brochureLink = publicUrl.publicUrl;
   }
 
   if(!theme || !category || !date || !time || !venue){
@@ -173,17 +182,32 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   }
 
   if(editId){
+
+    const updateData = {
+      theme,category,club,date,time,venue,
+      resourcePerson,audience
+    };
+
+    if(brochureLink){
+      updateData.brochureLink = brochureLink;
+    }
+
     await supabaseClient
       .from("events")
-      .update({theme,category,club,date,time,venue,resourcePerson,audience,brochureLink})
+      .update(updateData)
       .eq("id", editId);
 
     editId = null;
     document.getElementById("submitBtn").innerText = "Add Event";
+
   } else {
+
     await supabaseClient
       .from("events")
-      .insert([{theme,category,club,date,time,venue,resourcePerson,audience,brochureLink}]);
+      .insert([{
+        theme,category,club,date,time,venue,
+        resourcePerson,audience,brochureLink
+      }]);
   }
 
   alert("Event Saved Successfully ✅");
