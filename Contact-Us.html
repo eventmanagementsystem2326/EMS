@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Contact Us - Student Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Inter', sans-serif;
+    }
+
+    body{
+      display:flex;
+      height:100vh;
+      background:#f4f6f9;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      width:240px;
+      background:linear-gradient(180deg,#5f2c82,#49a09d);
+      color:white;
+      padding:30px 20px;
+    }
+
+    .sidebar h2{
+      margin-bottom:40px;
+      font-size:20px;
+    }
+
+    .sidebar a{
+      display:block;
+      color:white;
+      text-decoration:none;
+      margin-bottom:15px;
+      padding:10px;
+      border-radius:8px;
+      transition:0.3s;
+    }
+
+    .sidebar a:hover{
+      background:rgba(255,255,255,0.2);
+    }
+
+    /* MAIN */
+    .main{
+      flex:1;
+      padding:40px;
+      overflow:auto;
+    }
+
+    h1{
+      margin-bottom:25px;
+      color:#333;
+    }
+
+    /* INFO CARDS */
+    .contact-box{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.05);
+      margin-bottom:30px;
+    }
+
+    .contact-box p{
+      font-size:15px;
+      margin-bottom:10px;
+      color:#444;
+    }
+
+    .contact-box span{
+      font-weight:600;
+      color:#5f2c82;
+    }
+
+    /* TABLE */
+    .table-section{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th, td{
+      padding:12px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:14px;
+    }
+
+    th{
+      background:#f4f6f9;
+      font-weight:600;
+    }
+
+    tr:hover{
+      background:#fafafa;
+    }
+
+    .no-data{
+      text-align:center;
+      padding:20px;
+      color:#888;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>Student Panel</h2>
+
+  <a href="student-dashboard.html">Dashboard</a>
+  <a href="view-events.html">View Events</a>
+  <a href="view-competitions.html">View Competitions</a>
+  <a href="my-registrations.html">My Registrations</a>
+  <a href="contact-us.html">Contact Us</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <h1>Contact Us</h1>
+
+  <!-- COLLEGE CONTACT -->
+  <div class="contact-box">
+    <p>📧 College Email: <span>college@yourdomain.com</span></p>
+    <p>📞 Contact Number: <span>+91 9876543210</span></p>
+  </div>
+
+  <!-- CLUB CONTACT TABLE -->
+  <div class="table-section">
+    <h3 style="margin-bottom:15px;">Club Coordinators</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Club Name</th>
+          <th>Faculty Coordinator</th>
+          <th>Student Coordinator</th>
+        </tr>
+      </thead>
+
+      <tbody id="clubTable">
+
+        <!-- SAMPLE DATA (you can replace or load from DB) -->
+        <tr>
+          <td>Coding Club</td>
+          <td>Dr. Shrinivas</td>
+          <td>Swasthik C Shetty</td>
+        </tr>
+
+        <tr>
+          <td>Cultural Club</td>
+          <td>Prof. Divyashree</td>
+          <td>Rashmitha</td>
+        </tr>
+
+        <tr>
+          <td>Sports Club</td>
+          <td>Mr. Dheeraj</td>
+          <td>Shriprada</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+</body>
+</html>
