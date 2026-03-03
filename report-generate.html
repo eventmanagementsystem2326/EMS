@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Report Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* YOUR FULL OLD CSS REMAINS SAME */
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter', sans-serif;}
+    body{display:flex;height:100vh;background:#f4f6f9;}
+    .sidebar{width:240px;background:linear-gradient(180deg,#5f2c82,#49a09d);color:white;padding:30px 20px;display:flex;flex-direction:column;}
+    .sidebar h2{margin-bottom:40px;font-size:20px;font-weight:600;}
+    .menu{list-style:none;}
+    .menu li{margin-bottom:15px;}
+    .menu a{text-decoration:none;color:white;padding:10px 15px;display:block;border-radius:8px;transition:0.3s;font-size:14px;}
+    .menu a:hover{background:rgba(255,255,255,0.2);transform:translateX(5px);}
+    .main{flex:1;padding:40px;overflow-y:auto;}
+    .topbar{margin-bottom:30px;}
+    .topbar h1{font-size:24px;font-weight:600;color:#333;}
+    .section{background:white;padding:25px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.05);margin-bottom:30px;}
+    .section h3{margin-bottom:15px;color:#5f2c82;}
+    table{width:100%;border-collapse:collapse;margin-bottom:15px;}
+    table th, table td{padding:12px;text-align:left;font-size:14px;}
+    table th{background:#f4f6f9;font-weight:600;}
+    table tr{border-bottom:1px solid #eee;}
+    table tr:hover{background:#f9fafb;}
+    .no-data{text-align:center;padding:20px;color:#888;}
+    .report-btn{background:#5f2c82;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;float:right;transition:0.3s;}
+    .report-btn:hover{background:#4b1f66;}
+    select{padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;}
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Admin Panel</h2>
+  <ul class="menu">
+    <li><a href="admin-dashboard.html">Dashboard</a></li>
+    <li><a href="manage-events.html">Manage Events</a></li>
+    <li><a href="manage-competitions.html">Manage Competitions</a></li>
+    <li><a href="manage-homescreen.html">Manage Highlights</a></li>
+    <li><a href="#">View Registrations</a></li>
+    <li><a href="report-generate.html"><b>Report Generator</b></a></li>
+    <li><a href="login.html">Logout</a></li>
+  </ul>
+</div>
+
+<div class="main">
+
+  <div class="topbar">
+    <h1>Report Generator</h1>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="section" id="eventsSection">
+    <h3>List Of Events</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Club</th>
+          <th>Date</th>
+          <th>Venue</th>
+        </tr>
+      </thead>
+      <tbody id="eventReport"></tbody>
+    </table>
+    <button class="report-btn" onclick="downloadPDF('eventsSection','Events_Report.pdf')">Generate Report</button>
+  </div>
+
+  <!-- COMPETITIONS -->
+  <div class="section" id="competitionsSection">
+    <h3>List Of Competitions</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Competition Name</th>
+          <th>Date</th>
+          <th>Venue</th>
+        </tr>
+      </thead>
+      <tbody id="competitionReport"></tbody>
+    </table>
+    <button class="report-btn" onclick="downloadPDF('competitionsSection','Competitions_Report.pdf')">Generate Report</button>
+  </div>
+
+  <!-- PARTICIPANTS -->
+  <div class="section" id="participantsSection">
+    <h3>List Of Participants</h3>
+
+    <!-- NEW DROPDOWN -->
+    <select id="competitionDropdown" onchange="loadParticipants()">
+      <option value="">-- Select Competition --</option>
+    </select>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Registration No</th>
+          <th>Department</th>
+          <th>Year</th>
+          <th>Contact No</th>
+        </tr>
+      </thead>
+      <tbody id="participantReport"></tbody>
+    </table>
+    <button class="report-btn" onclick="downloadPDF('participantsSection','Participants_Report.pdf')">Generate Report</button>
+  </div>
+
+</div>
+
+<script>
+
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function loadReports(){
+
+  const { data: events } = await supabaseClient.from("events").select("*");
+  const { data: competitions } = await supabaseClient.from("competitions").select("*");
+
+  const eventBody = document.getElementById("eventReport");
+  const compBody = document.getElementById("competitionReport");
+
+  eventBody.innerHTML="";
+  compBody.innerHTML="";
+
+  if(events){
+    events.forEach(e=>{
+      eventBody.innerHTML+=`
+        <tr>
+          <td>${e.theme}</td>
+          <td>${e.club || "-"}</td>
+          <td>${e.date}</td>
+          <td>${e.venue}</td>
+        </tr>`;
+    });
+  }
+
+  if(competitions){
+    competitions.forEach(c=>{
+      compBody.innerHTML+=`
+        <tr>
+          <td>${c.theme}</td>
+          <td>${c.competitionDate || "-"}</td>
+          <td>${c.venue || "-"}</td>
+        </tr>`;
+
+      document.getElementById("competitionDropdown").innerHTML +=
+        `<option value="${c.id}" data-type="${c.type}">${c.theme}</option>`;
+    });
+  }
+}
+
+async function loadParticipants(){
+
+  const compId = document.getElementById("competitionDropdown").value;
+  const selected = document.querySelector("#competitionDropdown option:checked");
+  const type = selected.getAttribute("data-type");
+
+  const { data } = await supabaseClient
+    .from("registrations")
+    .select("*")
+    .eq("competitionId", compId);
+
+  const partBody = document.getElementById("participantReport");
+  partBody.innerHTML="";
+
+  if(!data || data.length===0){
+    partBody.innerHTML=`<tr><td colspan="5" class="no-data">No participants</td></tr>`;
+    return;
+  }
+
+  data.forEach(r=>{
+    if(type==="Group"){
+      partBody.innerHTML+=`
+        <tr>
+          <td>${r.group_members}</td>
+          <td>${r.group_registration_numbers}</td>
+          <td>${r.department}</td>
+          <td>${r.year}</td>
+          <td>${r.contact}</td>
+        </tr>`;
+    } else {
+      partBody.innerHTML+=`
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.registration_no}</td>
+          <td>${r.department}</td>
+          <td>${r.year}</td>
+          <td>${r.contact}</td>
+        </tr>`;
+    }
+  });
+}
+
+function downloadPDF(sectionId, fileName){
+  const element = document.getElementById(sectionId);
+  html2pdf().from(element).save(fileName);
+}
+
+loadReports();
+
+</script>
+
+</body>
+</html>
