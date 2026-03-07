@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>View Registrations</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter', sans-serif;
+}
+
+body{
+display:flex;
+height:100vh;
+background:#f4f6f9;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:240px;
+background:linear-gradient(180deg,#5f2c82,#49a09d);
+color:white;
+padding:30px 20px;
+display:flex;
+flex-direction:column;
+}
+
+.sidebar h2{
+margin-bottom:40px;
+font-size:20px;
+font-weight:600;
+}
+
+.menu{
+list-style:none;
+}
+
+.menu li{
+margin-bottom:15px;
+}
+
+.menu a{
+text-decoration:none;
+color:white;
+padding:10px 15px;
+display:block;
+border-radius:8px;
+transition:0.3s;
+font-size:14px;
+}
+
+.menu a:hover{
+background:rgba(255,255,255,0.2);
+transform:translateX(5px);
+}
+
+/* MAIN */
+
+.main{
+flex:1;
+padding:40px;
+overflow-y:auto;
+}
+
+.topbar{
+margin-bottom:30px;
+}
+
+.topbar h1{
+font-size:24px;
+font-weight:600;
+color:#333;
+}
+
+/* TABLE */
+
+.table-section{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+table th, table td{
+padding:12px;
+text-align:left;
+font-size:14px;
+}
+
+table th{
+background:#f4f6f9;
+font-weight:600;
+}
+
+table tr{
+border-bottom:1px solid #eee;
+}
+
+table tr:hover{
+background:#f9fafb;
+}
+
+.no-data{
+text-align:center;
+padding:20px;
+color:#888;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<h2>Admin Panel</h2>
+
+<ul class="menu">
+<li><a href="admin-dashboard.html">Dashboard</a></li>
+<li><a href="manage-events.html">Manage Events</a></li>
+<li><a href="manage-competitions.html">Manage Competitions</a></li>
+<li><a href="manage-homescreen.html">Manage Highlights</a></li>
+<li><a href="view-registration.html">View Registrations</a></li>
+<li><a href="report-generate.html">Report Generate</a></li>
+<li><a href="login.html">Logout</a></li>
+</ul>
+
+</div>
+
+
+<!-- MAIN -->
+
+<div class="main">
+
+<div class="topbar">
+<h1>Event Management System</h1>
+</div>
+
+<div class="table-section">
+
+<h3 style="margin-bottom:15px;">View Participants Registration</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Participant Name</th>
+<th>USN</th>
+<th>Dept</th>
+<th>Sem</th>
+<th>Email</th>
+<th>Phone No</th>
+<th>Competition</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="registrationBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- SUPABASE -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+
+
+async function loadRegistrations(){
+
+const { data: registrations } =
+await supabaseClient.from("registrations").select("*");
+
+const { data: competitions } =
+await supabaseClient.from("competitions").select("*");
+
+
+const body = document.getElementById("registrationBody");
+
+body.innerHTML = "";
+
+
+/* Create competition map */
+
+let compMap = {};
+
+if(competitions){
+competitions.forEach(c=>{
+compMap[c.id] = c.theme;
+});
+}
+
+
+/* Show data */
+
+if(!registrations || registrations.length === 0){
+
+body.innerHTML = `
+<tr>
+<td colspan="8" class="no-data">No registrations found</td>
+</tr>
+`;
+
+return;
+}
+
+
+registrations.forEach(r => {
+
+let competitionName = compMap[r.competition_id] || "-";
+
+body.innerHTML += `
+<tr>
+
+<td>${r.student_name}</td>
+<td>${r.register_number}</td>
+<td>${r.department}</td>
+<td>${r.semester}</td>
+<td>${r.email}</td>
+<td>${r.contact_number}</td>
+<td>${competitionName}</td>
+<td>Registered</td>
+
+</tr>
+`;
+
+});
+
+}
+
+loadRegistrations();
+
+</script>
+
+</body>
+</html>
