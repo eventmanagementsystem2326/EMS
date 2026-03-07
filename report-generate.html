@@ -42,8 +42,8 @@
     <li><a href="manage-events.html">Manage Events</a></li>
     <li><a href="manage-competitions.html">Manage Competitions</a></li>
     <li><a href="manage-homescreen.html">Manage Highlights</a></li>
-    <li><a href="#">View Registrations</a></li>
-    <li><a href="report-generate.html"><b>Report Generator</b></a></li>
+    <li><a href="view-registration.html">View Registrations</a></li>
+    <li><a href="report-generate.html">Report Generator</a></li>
     <li><a href="login.html">Logout</a></li>
   </ul>
 </div>
@@ -103,6 +103,7 @@
           <th>Registration No</th>
           <th>Department</th>
           <th>Year</th>
+          <th>Email</th>
           <th>Contact No</th>
         </tr>
       </thead>
@@ -119,6 +120,7 @@ const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+/* LOAD EVENTS + COMPETITIONS */
 async function loadReports(){
 
   const { data: events } = await supabaseClient.from("events").select("*");
@@ -130,7 +132,7 @@ async function loadReports(){
   eventBody.innerHTML="";
   compBody.innerHTML="";
 
-  if(events){
+  if(events && events.length){
     events.forEach(e=>{
       eventBody.innerHTML+=`
         <tr>
@@ -138,38 +140,54 @@ async function loadReports(){
           <td>${e.club || "-"}</td>
           <td>${e.date}</td>
           <td>${e.venue}</td>
-        </tr>`;
+        </tr>
+      `;
     });
+  }else{
+    eventBody.innerHTML=`<tr><td colspan="4" class="no-data">No events available</td></tr>`;
   }
 
-  if(competitions){
+  if(competitions && competitions.length){
     competitions.forEach(c=>{
+
       compBody.innerHTML+=`
         <tr>
           <td>${c.theme}</td>
           <td>${c.competitionDate || "-"}</td>
           <td>${c.venue || "-"}</td>
-        </tr>`;
+        </tr>
+      `;
 
       document.getElementById("competitionDropdown").innerHTML +=
-        `<option value="${c.id}" data-type="${c.type}">${c.theme}</option>`;
+        `<option value="${c.id}" data-type="${c.competition_type}">
+          ${c.theme}
+        </option>`;
     });
+
+  }else{
+    compBody.innerHTML=`<tr><td colspan="3" class="no-data">No competitions available</td></tr>`;
   }
+
 }
 
+
+/* LOAD PARTICIPANTS */
 async function loadParticipants(){
 
   const compId = document.getElementById("competitionDropdown").value;
-  const selected = document.querySelector("#competitionDropdown option:checked");
-  const type = selected.getAttribute("data-type");
+
+  const partBody = document.getElementById("participantReport");
+  partBody.innerHTML="";
+
+  if(!compId){
+    partBody.innerHTML=`<tr><td colspan="5" class="no-data">Select competition</td></tr>`;
+    return;
+  }
 
   const { data } = await supabaseClient
     .from("registrations")
     .select("*")
-    .eq("competitionId", compId);
-
-  const partBody = document.getElementById("participantReport");
-  partBody.innerHTML="";
+    .eq("competition_id", compId);
 
   if(!data || data.length===0){
     partBody.innerHTML=`<tr><td colspan="5" class="no-data">No participants</td></tr>`;
@@ -177,31 +195,73 @@ async function loadParticipants(){
   }
 
   data.forEach(r=>{
-    if(type==="Group"){
+
+    /* GROUP COMPETITION */
+    if(r.team_members){
+
+      let names = "";
+      let regnos = "";
+
+      r.team_members.forEach(member=>{
+        names += member.name + "<br>";
+        regnos += member.usn + "<br>";
+      });
+
       partBody.innerHTML+=`
         <tr>
-          <td>${r.group_members}</td>
-          <td>${r.group_registration_numbers}</td>
+          <td>${names}</td>
+          <td>${regnos}</td>
           <td>${r.department}</td>
-          <td>${r.year}</td>
-          <td>${r.contact}</td>
-        </tr>`;
-    } else {
-      partBody.innerHTML+=`
-        <tr>
-          <td>${r.name}</td>
-          <td>${r.registration_no}</td>
-          <td>${r.department}</td>
-          <td>${r.year}</td>
-          <td>${r.contact}</td>
-        </tr>`;
+          <td>${r.semester}</td>
+          <td>${r.email}</td>
+          <td>${r.contact_number}</td>
+        </tr>
+      `;
+
     }
+
+    /* INDIVIDUAL */
+    else{
+
+      partBody.innerHTML+=`
+        <tr>
+          <td>${r.student_name}</td>
+          <td>${r.register_number}</td>
+          <td>${r.department}</td>
+          <td>${r.semester}</td>
+          <td>${r.semester}</td>
+          <td>${r.email}</td>
+          <td>${r.contact_number}</td>
+        </tr>
+      `;
+
+    }
+
   });
+
 }
 
+
+/* DOWNLOAD PDF */
 function downloadPDF(sectionId, fileName){
+
   const element = document.getElementById(sectionId);
-  html2pdf().from(element).save(fileName);
+  const btn = element.querySelector(".report-btn");
+
+  btn.style.display="none"; // hide button
+
+  const opt = {
+    margin: 10,
+    filename: fileName,
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(()=>{
+    btn.style.display="block"; // show again
+  });
+
 }
 
 loadReports();
