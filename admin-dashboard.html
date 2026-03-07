@@ -1,257 +1,373 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Admin Dashboard</title>
 
-  <style>
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-      font-family:'Inter', sans-serif;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    body{
-      display:flex;
-      height:100vh;
-      background:#f4f6f9;
-    }
+<style>
 
-    .sidebar{
-      width:240px;
-      background:linear-gradient(180deg,#5f2c82,#49a09d);
-      color:white;
-      padding:30px 20px;
-      display:flex;
-      flex-direction:column;
-    }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter', sans-serif;
+}
 
-    .sidebar h2{
-      margin-bottom:40px;
-      font-size:20px;
-      font-weight:600;
-    }
+body{
+display:flex;
+height:100vh;
+background:#f4f6f9;
+}
 
-    .menu{
-      list-style:none;
-    }
+.sidebar{
+width:240px;
+background:linear-gradient(180deg,#5f2c82,#49a09d);
+color:white;
+padding:30px 20px;
+display:flex;
+flex-direction:column;
+}
 
-    .menu li{
-      margin-bottom:15px;
-    }
+.sidebar h2{
+margin-bottom:40px;
+font-size:20px;
+font-weight:600;
+}
 
-    .menu a{
-      text-decoration:none;
-      color:white;
-      padding:10px 15px;
-      display:block;
-      border-radius:8px;
-      transition:0.3s;
-      font-size:14px;
-    }
+.menu{
+list-style:none;
+}
 
-    .menu a:hover{
-      background:rgba(255,255,255,0.2);
-      transform:translateX(5px);
-    }
+.menu li{
+margin-bottom:15px;
+}
 
-    .main{
-      flex:1;
-      padding:40px;
-      overflow-y:auto;
-    }
+.menu a{
+text-decoration:none;
+color:white;
+padding:10px 15px;
+display:block;
+border-radius:8px;
+transition:0.3s;
+font-size:14px;
+}
 
-    .topbar{
-      margin-bottom:30px;
-    }
+.menu a:hover{
+background:rgba(255,255,255,0.2);
+transform:translateX(5px);
+}
 
-    .topbar h1{
-      font-size:24px;
-      font-weight:600;
-      color:#333;
-    }
+.main{
+flex:1;
+padding:40px;
+overflow-y:auto;
+}
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:20px;
-      margin-bottom:30px;
-    }
+.topbar{
+margin-bottom:30px;
+}
 
-    .card{
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.05);
-      transition:0.3s;
-    }
+.topbar h1{
+font-size:24px;
+font-weight:600;
+color:#333;
+}
 
-    .card:hover{
-      transform:translateY(-5px);
-    }
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+margin-bottom:30px;
+}
 
-    .card h3{
-      font-size:16px;
-      margin-bottom:10px;
-      color:#555;
-    }
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+transition:0.3s;
+}
 
-    .card p{
-      font-size:22px;
-      font-weight:600;
-      color:#5f2c82;
-    }
+.card:hover{
+transform:translateY(-5px);
+}
 
-    .table-section{
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.05);
-    }
+.card h3{
+font-size:16px;
+margin-bottom:10px;
+color:#555;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
+.card p{
+font-size:22px;
+font-weight:600;
+color:#5f2c82;
+}
 
-    table th, table td{
-      padding:12px;
-      text-align:left;
-      font-size:14px;
-    }
+.table-section{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+margin-bottom:30px;
+}
 
-    table th{
-      background:#f4f6f9;
-      font-weight:600;
-    }
+table{
+width:100%;
+border-collapse:collapse;
+}
 
-    table tr{
-      border-bottom:1px solid #eee;
-    }
+table th, table td{
+padding:12px;
+text-align:left;
+font-size:14px;
+}
 
-    table tr:hover{
-      background:#f9fafb;
-    }
+table th{
+background:#f4f6f9;
+font-weight:600;
+}
 
-    .no-data{
-      text-align:center;
-      padding:20px;
-      color:#888;
-    }
+table tr{
+border-bottom:1px solid #eee;
+}
 
-  </style>
+table tr:hover{
+background:#f9fafb;
+}
+
+.no-data{
+text-align:center;
+padding:20px;
+color:#888;
+}
+
+</style>
 </head>
 
 <body>
 
-  <div class="sidebar">
-    <h2>Admin Panel</h2>
+<div class="sidebar">
 
-    <ul class="menu">
-      <li><a href="#">Dashboard</a></li>
-      <li><a href="manage-events.html">Manage Events</a></li>
-      <li><a href="manage-competitions.html">Manage Competitions</a></li>
-      <li><a href="manage-homescreen.html">Manage Highlights</a></li>
-      <li><a href="#">View Registrations</a></li>
-      <li><a href="report-generate.html">Report Generator</a></li>
-      <li><a href="login.html">Logout</a></li>
-    </ul>
-  </div>
+<h2>Admin Panel</h2>
 
-  <div class="main">
+<ul class="menu">
+<li><a href="#">Dashboard</a></li>
+<li><a href="manage-events.html">Manage Events</a></li>
+<li><a href="manage-competitions.html">Manage Competitions</a></li>
+<li><a href="manage-homescreen.html">Manage Highlights</a></li>
+<li><a href="view-registration.html">View Registrations</a></li>
+<li><a href="report-generate.html">Report Generator</a></li>
+<li><a href="login.html">Logout</a></li>
+</ul>
 
-    <div class="topbar">
-      <h1>Dashboard Overview</h1>
-    </div>
+</div>
 
-    <div class="cards">
-      <div class="card">
-        <h3>Total Events</h3>
-        <p id="totalEvents">0</p>
-      </div>
+<div class="main">
 
-      <div class="card">
-        <h3>Total Competitions</h3>
-        <p id="totalCompetitions">0</p>
-      </div>
+<div class="topbar">
+<h1>Dashboard Overview</h1>
+</div>
 
-      <div class="card">
-        <h3>Total Registrations</h3>
-        <p id="totalRegistrations">0</p>
-      </div>
-    </div>
+<div class="cards">
 
-    <div class="table-section">
-      <h3 style="margin-bottom:15px;">Recent Events</h3>
+<div class="card">
+<h3>Total Events</h3>
+<p id="totalEvents">0</p>
+</div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Event Name</th>
-            <th>Date</th>
-            <th>Venue</th>
-          </tr>
-        </thead>
-        <tbody id="eventsBody"></tbody>
-      </table>
-    </div>
+<div class="card">
+<h3>Total Competitions</h3>
+<p id="totalCompetitions">0</p>
+</div>
 
-  </div>
+<div class="card">
+<h3>Registrations Open</h3>
+<p id="totalRegistrations">0</p>
+</div>
 
-  <!-- Supabase Script -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-  const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+</div>
 
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+<!-- RECENT EVENTS -->
 
-    async function loadDashboard() {
+<div class="table-section">
 
-      const { data: events, error: eventsError } =
-        await supabaseClient.from("events").select("*");
+<h3 style="margin-bottom:15px;">Recent Events</h3>
 
-      const { data: competitions, error: compError } =
-        await supabaseClient.from("competitions").select("*");
+<table>
+<thead>
+<tr>
+<th>Event Name</th>
+<th>Date</th>
+<th>Venue</th>
+<th>Time</th>
+</tr>
+</thead>
 
-      const { data: registrations, error: regError } =
-        await supabaseClient.from("registrations").select("*");
+<tbody id="eventsBody"></tbody>
 
-      document.getElementById("totalEvents").innerText =
-        events ? events.length : 0;
+</table>
 
-      document.getElementById("totalCompetitions").innerText =
-        competitions ? competitions.length : 0;
+</div>
 
-      document.getElementById("totalRegistrations").innerText =
-        registrations ? registrations.length : 0;
+<!-- RECENT COMPETITIONS -->
 
-      const eventsBody = document.getElementById("eventsBody");
-      eventsBody.innerHTML = "";
+<div class="table-section">
 
-      if(!events || events.length === 0){
-        eventsBody.innerHTML = `
-          <tr>
-            <td colspan="3" class="no-data">No events available</td>
-          </tr>
-        `;
-      } else {
-        events.forEach(event => {
-          eventsBody.innerHTML += `
-            <tr>
-              <td>${event.theme}</td>
-              <td>${event.date}</td>
-              <td>${event.venue}</td>
-            </tr>
-          `;
-        });
-      }
-    }
+<h3 style="margin-bottom:15px;">
+Recent Competitions (<span id="competitionCount">0</span>)
+</h3>
 
-    loadDashboard();
+<table>
+<thead>
+<tr>
+<th>Competition Name</th>
+<th>Date</th>
+<th>Venue</th>
+<th>Registrations</th>
+</tr>
+</thead>
 
-  </script>
+<tbody id="competitionsBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function loadDashboard(){
+
+const { data: events } = await supabaseClient.from("events").select("*");
+const { data: competitions } = await supabaseClient.from("competitions").select("*");
+const { data: registrations } = await supabaseClient.from("registrations").select("*");
+
+document.getElementById("totalEvents").innerText = events ? events.length : 0;
+document.getElementById("totalCompetitions").innerText = competitions ? competitions.length : 0;
+document.getElementById("totalRegistrations").innerText = registrations ? registrations.length : 0;
+
+/* EVENTS */
+
+const eventsBody = document.getElementById("eventsBody");
+eventsBody.innerHTML="";
+
+if(events && events.length){
+
+events.slice(-5).reverse().forEach(event=>{
+
+eventsBody.innerHTML+=`
+<tr>
+<td>${event.theme}</td>
+<td>${event.date}</td>
+<td>${event.venue}</td>
+<td>${event.time}</td>
+</tr>
+`;
+
+});
+
+}else{
+
+eventsBody.innerHTML=`
+<tr>
+<td colspan="4" class="no-data">No events available</td>
+</tr>
+`;
+
+}
+
+/* COMPETITIONS */
+
+const competitionsBody=document.getElementById("competitionsBody");
+competitionsBody.innerHTML="";
+
+document.getElementById("competitionCount").innerText=
+competitions?competitions.length:0;
+
+if(!competitions || competitions.length===0){
+
+competitionsBody.innerHTML=`
+<tr>
+<td colspan="4" class="no-data">No competitions available</td>
+</tr>
+`;
+
+return;
+}
+
+const recentCompetitions=competitions.slice(-5).reverse();
+
+recentCompetitions.forEach(comp=>{
+
+const compRegistrations=registrations.filter(r=>r.competition_id===comp.id);
+
+let registrationInfo="0";
+
+/* GROUP COMPETITION */
+
+let groupCount=0;
+let participantCount=0;
+
+compRegistrations.forEach(reg=>{
+
+if(reg.team_members){
+
+let members=reg.team_members;
+
+/* convert JSON string if needed */
+
+if(typeof members==="string"){
+members=JSON.parse(members);
+}
+
+if(Array.isArray(members)){
+
+groupCount++;
+participantCount+=members.length;
+
+}
+
+}
+
+});
+
+/* display */
+
+if(groupCount>0){
+
+registrationInfo=`${groupCount} Groups (${participantCount} Participants)`;
+
+}else{
+
+registrationInfo=compRegistrations.length;
+
+}
+
+competitionsBody.innerHTML+=`
+<tr>
+<td>${comp.theme}</td>
+<td>${comp.competitionDate}</td>
+<td>${comp.venue}</td>
+<td>${registrationInfo}</td>
+</tr>
+`;
+
+});
+
+}
+
+loadDashboard();
+
+</script>
 
 </body>
 </html>
