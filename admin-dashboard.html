@@ -25,53 +25,29 @@ width:240px;
 background:linear-gradient(180deg,#5f2c82,#49a09d);
 color:white;
 padding:30px 20px;
-display:flex;
-flex-direction:column;
-}
-
-.sidebar h2{
-margin-bottom:40px;
-font-size:20px;
-font-weight:600;
-}
-
-.menu{
-list-style:none;
 }
 
 .menu li{
+list-style:none;
 margin-bottom:15px;
 }
 
 .menu a{
-text-decoration:none;
 color:white;
-padding:10px 15px;
+text-decoration:none;
+padding:10px;
 display:block;
 border-radius:8px;
-transition:0.3s;
-font-size:14px;
 }
 
 .menu a:hover{
 background:rgba(255,255,255,0.2);
-transform:translateX(5px);
 }
 
 .main{
 flex:1;
 padding:40px;
 overflow-y:auto;
-}
-
-.topbar{
-margin-bottom:30px;
-}
-
-.topbar h1{
-font-size:24px;
-font-weight:600;
-color:#333;
 }
 
 .cards{
@@ -86,22 +62,10 @@ background:white;
 padding:20px;
 border-radius:12px;
 box-shadow:0 10px 25px rgba(0,0,0,0.05);
-transition:0.3s;
-}
-
-.card:hover{
-transform:translateY(-5px);
-}
-
-.card h3{
-font-size:16px;
-margin-bottom:10px;
-color:#555;
 }
 
 .card p{
 font-size:22px;
-font-weight:600;
 color:#5f2c82;
 }
 
@@ -120,21 +84,12 @@ border-collapse:collapse;
 
 table th, table td{
 padding:12px;
-text-align:left;
 font-size:14px;
+text-align:left;
 }
 
 table th{
 background:#f4f6f9;
-font-weight:600;
-}
-
-table tr{
-border-bottom:1px solid #eee;
-}
-
-table tr:hover{
-background:#f9fafb;
 }
 
 .no-data{
@@ -143,57 +98,46 @@ padding:20px;
 color:#888;
 }
 
+input[type="date"]{
+padding:6px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="sidebar">
-
 <h2>Admin Panel</h2>
-
 <ul class="menu">
 <li><a href="#">Dashboard</a></li>
 <li><a href="manage-events.html">Manage Events</a></li>
 <li><a href="manage-competitions.html">Manage Competitions</a></li>
-<li><a href="manage-homescreen.html">Manage Highlights</a></li>
 <li><a href="view-registration.html">View Registrations</a></li>
 <li><a href="report-generate.html">Report Generator</a></li>
 <li><a href="login.html">Logout</a></li>
 </ul>
-
 </div>
 
 <div class="main">
 
-<div class="topbar">
-<h1>Dashboard Overview</h1>
-</div>
+<h1 style="margin-bottom:20px;">Dashboard Overview</h1>
 
 <div class="cards">
-
-<div class="card">
-<h3>Total Events</h3>
-<p id="totalEvents">0</p>
+<div class="card"><h3>Total Events</h3><p id="totalEvents">0</p></div>
+<div class="card"><h3>Total Competitions</h3><p id="totalCompetitions">0</p></div>
+<div class="card"><h3>Registrations Open</h3><p id="totalRegistrations">0</p></div>
 </div>
 
-<div class="card">
-<h3>Total Competitions</h3>
-<p id="totalCompetitions">0</p>
-</div>
-
-<div class="card">
-<h3>Registrations Open</h3>
-<p id="totalRegistrations">0</p>
-</div>
-
-</div>
-
-<!-- RECENT EVENTS -->
-
+<!-- EVENTS -->
 <div class="table-section">
 
-<h3 style="margin-bottom:15px;">Recent Events</h3>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<h3>Recent Events</h3>
+<input type="date" id="eventDateFilter" onchange="filterEvents()">
+</div>
 
 <table>
 <thead>
@@ -206,18 +150,17 @@ color:#888;
 </thead>
 
 <tbody id="eventsBody"></tbody>
-
 </table>
 
 </div>
 
-<!-- RECENT COMPETITIONS -->
-
+<!-- COMPETITIONS -->
 <div class="table-section">
 
-<h3 style="margin-bottom:15px;">
-Recent Competitions (<span id="competitionCount">0</span>)
-</h3>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<h3>Recent Competitions (<span id="competitionCount">0</span>)</h3>
+<input type="date" id="competitionDateFilter" onchange="filterCompetitions()">
+</div>
 
 <table>
 <thead>
@@ -230,7 +173,6 @@ Recent Competitions (<span id="competitionCount">0</span>)
 </thead>
 
 <tbody id="competitionsBody"></tbody>
-
 </table>
 
 </div>
@@ -241,9 +183,14 @@ Recent Competitions (<span id="competitionCount">0</span>)
 
 <script>
 
-const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = supabase.createClient(
+"https://oszgllewojvqcbehrtub.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0"
+);
+
+let allEvents = [];
+let allCompetitions = [];
+let allRegistrations = [];
 
 async function loadDashboard(){
 
@@ -251,113 +198,112 @@ const { data: events } = await supabaseClient.from("events").select("*");
 const { data: competitions } = await supabaseClient.from("competitions").select("*");
 const { data: registrations } = await supabaseClient.from("registrations").select("*");
 
-document.getElementById("totalEvents").innerText = events ? events.length : 0;
-document.getElementById("totalCompetitions").innerText = competitions ? competitions.length : 0;
-document.getElementById("totalRegistrations").innerText = registrations ? registrations.length : 0;
+allEvents = events || [];
+allCompetitions = competitions || [];
+allRegistrations = registrations || [];
 
-/* EVENTS */
+document.getElementById("totalEvents").innerText = allEvents.length;
+document.getElementById("totalCompetitions").innerText = allCompetitions.length;
+document.getElementById("totalRegistrations").innerText = allRegistrations.length;
 
-const eventsBody = document.getElementById("eventsBody");
-eventsBody.innerHTML="";
+filterEvents();
+filterCompetitions();
 
-if(events && events.length){
+}
 
-events.slice(-5).reverse().forEach(event=>{
+/* EVENTS FILTER */
+function filterEvents(){
 
-eventsBody.innerHTML+=`
+const selectedDate = document.getElementById("eventDateFilter").value;
+const body = document.getElementById("eventsBody");
+
+body.innerHTML = "";
+
+let filtered = selectedDate
+? allEvents.filter(e => new Date(e.date).toISOString().split("T")[0] === selectedDate)
+: allEvents;
+
+if(filtered.length){
+
+filtered.slice(-5).reverse().forEach(e=>{
+body.innerHTML += `
 <tr>
-<td>${event.theme}</td>
-<td>${event.date}</td>
-<td>${event.venue}</td>
-<td>${event.time}</td>
+<td>${e.theme}</td>
+<td>${e.date}</td>
+<td>${e.venue}</td>
+<td>${e.time}</td>
 </tr>
 `;
-
 });
 
 }else{
 
-eventsBody.innerHTML=`
+body.innerHTML = `
 <tr>
-<td colspan="4" class="no-data">No events available</td>
+<td colspan="4" class="no-data">No events scheduled</td>
 </tr>
 `;
 
 }
 
-/* COMPETITIONS */
+}
 
-const competitionsBody=document.getElementById("competitionsBody");
-competitionsBody.innerHTML="";
+/* COMPETITIONS FILTER */
+function filterCompetitions(){
 
-document.getElementById("competitionCount").innerText=
-competitions?competitions.length:0;
+const selectedDate = document.getElementById("competitionDateFilter").value;
+const body = document.getElementById("competitionsBody");
 
-if(!competitions || competitions.length===0){
+body.innerHTML = "";
 
-competitionsBody.innerHTML=`
+let filtered = selectedDate
+? allCompetitions.filter(c => new Date(c.competitionDate).toISOString().split("T")[0] === selectedDate)
+: allCompetitions;
+
+document.getElementById("competitionCount").innerText = filtered.length;
+
+if(!filtered.length){
+
+body.innerHTML = `
 <tr>
-<td colspan="4" class="no-data">No competitions available</td>
+<td colspan="4" class="no-data">No competitions scheduled</td>
 </tr>
 `;
 
 return;
 }
 
-const recentCompetitions=competitions.slice(-5).reverse();
+filtered.slice(-5).reverse().forEach(comp=>{
 
-recentCompetitions.forEach(comp=>{
+const regs = allRegistrations.filter(r=>r.competition_id===comp.id);
 
-const compRegistrations=registrations.filter(r=>r.competition_id===comp.id);
+let groupCount=0, participantCount=0;
 
-let registrationInfo="0";
+regs.forEach(r=>{
+if(r.team_members){
 
-/* GROUP COMPETITION */
-
-let groupCount=0;
-let participantCount=0;
-
-compRegistrations.forEach(reg=>{
-
-if(reg.team_members){
-
-let members=reg.team_members;
-
-/* convert JSON string if needed */
-
-if(typeof members==="string"){
-members=JSON.parse(members);
-}
+let members = typeof r.team_members === "string"
+? JSON.parse(r.team_members)
+: r.team_members;
 
 if(Array.isArray(members)){
-
 groupCount++;
-participantCount+=members.length;
-
+participantCount += members.length;
 }
 
 }
-
 });
 
-/* display */
+let info = groupCount>0
+? `${groupCount} Groups (${participantCount} Participants)`
+: regs.length;
 
-if(groupCount>0){
-
-registrationInfo=`${groupCount} Groups (${participantCount} Participants)`;
-
-}else{
-
-registrationInfo=compRegistrations.length;
-
-}
-
-competitionsBody.innerHTML+=`
+body.innerHTML += `
 <tr>
 <td>${comp.theme}</td>
 <td>${comp.competitionDate}</td>
 <td>${comp.venue}</td>
-<td>${registrationInfo}</td>
+<td>${info}</td>
 </tr>
 `;
 
