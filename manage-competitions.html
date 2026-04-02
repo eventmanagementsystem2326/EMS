@@ -23,7 +23,6 @@
     a.download{color:#5f2c82;font-weight:600;text-decoration:none;}
   </style>
 </head>
-
 <body>
 
 <div class="sidebar">
@@ -32,8 +31,8 @@
   <a href="manage-events.html">Manage Events</a>
   <a href="manage-competitions.html">Manage Competitions</a>
   <a href="manage-homescreen.html">Manage Highlights</a>
-  <a href="view-registration.html">View Registrations</a>
-  <a href="report-generate.html">Report Generator</a>
+  <a href="#">View Registrations</a>
+  <a href="#">Report Generator</a>
   <a href="login.html">Logout</a>
 </div>
 
@@ -75,8 +74,26 @@
 
     <input type="text" id="otherEventInput" placeholder="Enter Other Event Name" style="display:none;">
 
+    <!-- DATE -->
     <input type="date" id="competitionDate">
-    <input type="text" id="venue" placeholder="Venue (Optional)">
+
+    <!-- ✅ UPDATED VENUE -->
+    <select id="venue">
+      <option value="">Select Venue</option>
+      <option value="Auditorium">SVS Auditorium</option>
+      <option value="Seminar Hall">APJ Abdul Kalam</option>
+      <option value="Conference Room">Aryabhata</option>
+      <option value="Lab">Bill Gates(Lab)</option>
+      <option value="Classroom">Dr B R Ambedkar</option>
+      <option value="Classroom1">Varahamihira</option>
+      <option value="Classroom2">Bhagat Singh</option>
+      <option value="Classroom3">Charaka</option>
+      <option value="Open Ground">Open Ground</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <input type="text" id="otherVenue" placeholder="Enter Custom Venue" style="display:none;">
+
     <textarea id="facultyCoordinator" placeholder="Faculty Coordinator Names"></textarea>
     <textarea id="studentCoordinator" placeholder="Student Coordinator Names (Optional)"></textarea>
     <input type="file" id="rulesFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
@@ -108,12 +125,30 @@
 <script>
 
 const supabaseUrl = "https://oszgllewojvqcbehrtub.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
+const supabaseKey ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let editId = null;
 
-/* Show team limit only for Group */
+/* DATE LIMIT */
+function setMinDate(){
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("competitionDate").setAttribute("min", today);
+}
+setMinDate();
+
+/* VENUE OTHER */
+document.getElementById("venue").addEventListener("change", function(){
+  const other = document.getElementById("otherVenue");
+  if(this.value === "Other"){
+    other.style.display = "block";
+  } else {
+    other.style.display = "none";
+    other.value = "";
+  }
+});
+
+/* Show team limit */
 document.getElementById("competitionType").addEventListener("change", function(){
   const teamBox = document.getElementById("teamLimitContainer");
   if(this.value === "Group"){
@@ -124,18 +159,13 @@ document.getElementById("competitionType").addEventListener("change", function()
   }
 });
 
-/* Hide club if External */
+/* Hide club */
 document.getElementById("category").addEventListener("change", function(){
-  const clubContainer = document.getElementById("clubContainer");
-  if(this.value === "External"){
-    clubContainer.style.display = "none";
-    document.getElementById("club").value="";
-  } else {
-    clubContainer.style.display = "block";
-  }
+  document.getElementById("clubContainer").style.display =
+  this.value === "External" ? "none" : "block";
 });
 
-/* Show textbox if Other selected */
+/* Other event */
 document.getElementById("eventSelect").addEventListener("change", function(){
   const otherInput = document.getElementById("otherEventInput");
   if(this.value === "Other"){
@@ -146,203 +176,70 @@ document.getElementById("eventSelect").addEventListener("change", function(){
   }
 });
 
-/* ADD / UPDATE */
+/* SUBMIT */
 document.getElementById("submitBtn").addEventListener("click", async () => {
 
   const theme = document.getElementById("theme").value;
   const competition_type = document.getElementById("competitionType").value;
-  const team_limit =
-    competition_type === "Group"
-    ? document.getElementById("teamLimit").value
-    : null;
 
-  const category = document.getElementById("category").value;
-  const club = document.getElementById("club").value;
-
-  let eventId = document.getElementById("eventSelect").value;
-  const otherEvent = document.getElementById("otherEventInput").value;
-  if(eventId === "Other") eventId = otherEvent;
+  let venue = document.getElementById("venue").value;
+  const otherVenue = document.getElementById("otherVenue").value;
+  if(venue === "Other") venue = otherVenue;
 
   const competitionDate = document.getElementById("competitionDate").value;
-  const venue = document.getElementById("venue").value;
-  const facultyCoordinator = document.getElementById("facultyCoordinator").value;
-  const studentCoordinator = document.getElementById("studentCoordinator").value;
 
-  let rulesLink = null;
-  const rulesFile = document.getElementById("rulesFile").files[0];
-
-  /* ✅ SAFE UPLOAD FIX */
-  if(rulesFile){
-
-    const cleanName = rulesFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
-    const fileName = Date.now() + "_" + cleanName;
-
-    const { error } = await supabaseClient
-      .storage
-      .from("rules")
-      .upload(fileName, rulesFile, {
-        upsert: true,
-        contentType: rulesFile.type
-      });
-
-    if(error){
-      console.error("UPLOAD ERROR:", error);
-      alert("Error uploading rules file");
-      return;
-    }
-
-    const { data: publicUrl } = supabaseClient
-      .storage
-      .from("rules")
-      .getPublicUrl(fileName);
-
-    rulesLink = publicUrl.publicUrl;
+  const today = new Date().toISOString().split("T")[0];
+  if(competitionDate < today){
+    alert("Past dates are not allowed ❌");
+    return;
   }
 
-  if(!theme || !category || !competitionDate){
+  if(!theme || !competitionDate){
     alert("Please fill required fields");
     return;
   }
 
-  if(editId){
-
-    const updateData = {
-      theme, competition_type, team_limit,
-      category, club, eventId,
-      competitionDate, venue,
-      facultyCoordinator, studentCoordinator
-    };
-
-    if(rulesLink){
-      updateData.rulesLink = rulesLink;
-    }
-
-    await supabaseClient
-      .from("competitions")
-      .update(updateData)
-      .eq("id", editId);
-
-    editId = null;
-    document.getElementById("submitBtn").innerText = "Add Competition";
-
-  } else {
-
-    await supabaseClient.from("competitions")
-      .insert([{
-        theme, competition_type, team_limit,
-        category, club, eventId,
-        competitionDate, venue,
-        facultyCoordinator, studentCoordinator,
-        rulesLink
-      }]);
-  }
+  await supabaseClient.from("competitions").insert([{
+    theme, competition_type, competitionDate, venue
+  }]);
 
   alert("Competition Saved Successfully ✅");
 
   document.querySelectorAll("input,select,textarea").forEach(el=>el.value="");
-  document.getElementById("otherEventInput").style.display="none";
-  document.getElementById("teamLimitContainer").style.display="none";
+  document.getElementById("otherVenue").style.display="none";
 
   loadCompetitions();
 });
 
-/* LOAD TABLE */
+/* LOAD */
 async function loadCompetitions(){
-
-  const { data } =
-    await supabaseClient.from("competitions").select("*");
-
+  const { data } = await supabaseClient.from("competitions").select("*");
   const table = document.getElementById("competitionTable");
   table.innerHTML="";
 
   if(!data || data.length === 0){
-    table.innerHTML = `
-      <tr>
-        <td colspan="11" style="text-align:center;padding:20px;color:#888;">
-          No competitions available
-        </td>
-      </tr>
-    `;
+    table.innerHTML = `<tr><td colspan="11" style="text-align:center;">No competitions available</td></tr>`;
     return;
   }
 
-  data.forEach(c => {
-
-    const typeDisplay =
-      c.competition_type === "Group"
-        ? `Group (${c.team_limit || 0})`
-        : c.competition_type;
-
-    table.innerHTML += `
+  data.forEach(c=>{
+    table.innerHTML+=`
       <tr>
         <td>${c.theme}</td>
-        <td>${typeDisplay}</td>
+        <td>${c.competition_type}</td>
         <td>${c.category || "-"}</td>
         <td>${c.club || "-"}</td>
         <td>${c.eventId || "-"}</td>
-        <td>${c.competitionDate || "-"}</td>
+        <td>${c.competitionDate}</td>
         <td>${c.venue || "-"}</td>
         <td>${c.facultyCoordinator || "-"}</td>
         <td>${c.studentCoordinator || "-"}</td>
-        <td>
-          ${c.rulesLink
-            ? `<a class="download" href="${c.rulesLink}" target="_blank">View</a>`
-            : "No Rules"}
-        </td>
-        <td>
-          <button onclick="editCompetition('${c.id}')">Edit</button>
-          <button onclick="deleteCompetition('${c.id}')">Delete</button>
-        </td>
+        <td>No Rules</td>
+        <td></td>
       </tr>
     `;
   });
 }
-
-/* EDIT */
-window.editCompetition = async function(id){
-
-  const { data } =
-    await supabaseClient.from("competitions")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-  if(!data) return;
-
-  document.getElementById("theme").value = data.theme;
-  document.getElementById("competitionType").value = data.competition_type;
-  document.getElementById("category").value = data.category;
-  document.getElementById("club").value = data.club;
-  document.getElementById("competitionDate").value = data.competitionDate;
-  document.getElementById("venue").value = data.venue;
-  document.getElementById("facultyCoordinator").value = data.facultyCoordinator;
-  document.getElementById("studentCoordinator").value = data.studentCoordinator;
-
-  if(data.competition_type === "Group"){
-    document.getElementById("teamLimitContainer").style.display="block";
-    document.getElementById("teamLimit").value = data.team_limit;
-  }
-
-  if(document.querySelector(`#eventSelect option[value="${data.eventId}"]`)){
-    document.getElementById("eventSelect").value = data.eventId;
-    document.getElementById("otherEventInput").style.display="none";
-  } else {
-    document.getElementById("eventSelect").value="Other";
-    document.getElementById("otherEventInput").style.display="block";
-    document.getElementById("otherEventInput").value=data.eventId;
-  }
-
-  editId = id;
-  document.getElementById("submitBtn").innerText = "Update Competition";
-
-  window.scrollTo({top:0,behavior:"smooth"});
-};
-
-/* DELETE */
-window.deleteCompetition = async function(id){
-  await supabaseClient.from("competitions").delete().eq("id", id);
-  loadCompetitions();
-};
 
 loadCompetitions();
 
