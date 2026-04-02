@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Summary Report</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter', sans-serif;
+}
+
+body{
+display:flex;
+height:100vh;
+background:#f4f6f9;
+}
+
+/* SIDEBAR */
+.sidebar{
+width:240px;
+background:linear-gradient(180deg,#5f2c82,#49a09d);
+color:white;
+padding:30px 20px;
+display:flex;
+flex-direction:column;
+}
+
+.sidebar h2{
+margin-bottom:40px;
+font-size:20px;
+font-weight:600;
+}
+
+.menu{
+list-style:none;
+}
+
+.menu li{
+margin-bottom:15px;
+}
+
+.menu a{
+text-decoration:none;
+color:white;
+padding:10px 15px;
+display:block;
+border-radius:8px;
+transition:0.3s;
+font-size:14px;
+}
+
+.menu a:hover{
+background:rgba(255,255,255,0.2);
+transform:translateX(5px);
+}
+
+/* MAIN */
+.main{
+flex:1;
+padding:40px;
+overflow-y:auto;
+}
+
+/* CARD */
+.card{
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+width:fit-content;
+}
+
+/* FORM */
+select, button{
+padding:10px 15px;
+margin:10px 10px 20px 0;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+button{
+background:#5f2c82;
+color:white;
+cursor:pointer;
+border:none;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+h1{
+margin-bottom:20px;
+font-size:24px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+<h2>Admin Panel</h2>
+
+<ul class="menu">
+<li><a href="admin-dashboard.html">Dashboard</a></li>
+<li><a href="manage-events.html">Manage Events</a></li>
+<li><a href="manage-competitions.html">Manage Competitions</a></li>
+<li><a href="manage-homescreen.html">Manage Highlights</a></li>
+<li><a href="view-registration.html">View Registrations</a></li>
+<li><a href="report-generate.html">List Generator</a></li>
+<li><a href="summary-report.html">Summary Report</a></li>
+<li><a href="login.html">Logout</a></li>
+</ul>
+</div>
+
+<div class="main">
+
+<h1>Summary Report Generator</h1>
+
+<div class="card">
+
+<select id="typeSelect" onchange="loadDropdown()">
+<option value="">Select Type</option>
+<option value="event">Event</option>
+<option value="competition">Competition</option>
+</select>
+
+<select id="itemSelect">
+<option value="">Select Item</option>
+</select>
+
+<br>
+
+<button onclick="downloadPDF()">Generate Report</button>
+
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://oszgllewojvqcbehrtub.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zemdsbGV3b2p2cWNiZWhydHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjYzODIsImV4cCI6MjA4NzYwMjM4Mn0.Doz6ApUcY1HLsAx7HH1EX1Lx0QNLg7R3gl12jLfsmD0"
+);
+
+/* LOAD DROPDOWN */
+async function loadDropdown(){
+
+const type = document.getElementById("typeSelect").value;
+const select = document.getElementById("itemSelect");
+
+select.innerHTML = `<option value="">Select Item</option>`;
+
+if(type==="event"){
+const { data } = await supabaseClient.from("events").select("id, theme");
+data?.forEach(e=>{
+select.innerHTML += `<option value="${e.id}">${e.theme}</option>`;
+});
+}
+
+if(type==="competition"){
+const { data } = await supabaseClient.from("competitions").select("id, theme");
+data?.forEach(c=>{
+select.innerHTML += `<option value="${c.id}">${c.theme}</option>`;
+});
+}
+}
+
+/* BUTTON */
+function downloadPDF(){
+
+const type = document.getElementById("typeSelect").value;
+const id = document.getElementById("itemSelect").value;
+
+if(!type || !id){
+alert("Select item first");
+return;
+}
+
+generateReport(type,id);
+}
+
+/* MAIN REPORT */
+async function generateReport(type,id){
+
+let html = "";
+
+/* EVENT */
+if(type==="event"){
+
+const { data: e } = await supabaseClient
+.from("events").select("*").eq("id",id).single();
+
+let resourceLine = e.resourcePerson
+? `<p style="text-align:justify;">The programme was guided by <b>${e.resourcePerson}</b>, who shared valuable insights.</p>`
+: "";
+
+html = `
+<div style="
+width:210mm;
+height:297mm;
+padding:25mm 20mm;
+border:2px solid #000;
+font-family:'Times New Roman';
+box-sizing:border-box;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+">
+
+<!-- HEADER -->
+<div style="text-align:center;">
+<h2 style="margin:0;font-size:20px;font-weight:bold;">
+Trisha Vidya College of Commerce & Management
+</h2>
+
+<p style="margin:3px 0;font-size:14px;">
+S.V.S Campus, Katapadi, Udupi
+</p>
+
+<div style="margin-top:15px;font-weight:bold;line-height:1.5;">
+<p>${e.club || "Coding Club"}</p>
+<p>EVENT REPORT</p>
+<p>"${e.theme}"</p>
+</div>
+</div>
+
+<!-- CONTENT -->
+<div style="flex-grow:1;margin-top:40px;">
+
+<!-- DATE ROW -->
+<div style="
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+margin-bottom:25px;
+font-size:14px;
+">
+<div>DATE: ${formatDate(e.date)}</div>
+<div>VENUE: ${e.venue}</div>
+<div>TIME: ${e.time || "-"}</div>
+</div>
+
+<div style="font-size:14px;line-height:1.8;text-align:justify;">
+<p>
+An ${e.category || "External"} programme titled 
+"<b>${e.theme}</b>" was conducted by the college for ${e.audience || "students"}.
+</p>
+
+<p>
+The objective of the programme was to enhance the knowledge and skills of the participants.
+</p>
+
+${resourceLine}
+
+<p><b>Beneficiaries:</b> ${e.audience || "Students"}</p>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div style="
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+font-size:14px;
+margin-top:60px;
+">
+<div>Event Coordinator</div>
+<div>Principal</div>
+</div>
+
+</div>
+`;
+}
+
+/* COMPETITION */
+if(type==="competition"){
+
+const { data: c } = await supabaseClient
+.from("competitions").select("*").eq("id",id).single();
+
+const { data: regs } = await supabaseClient
+.from("registrations").select("*").eq("competition_id",id);
+
+let total = 0;
+
+regs?.forEach(r=>{
+if(r.team_members){
+let m = typeof r.team_members==="string"
+? JSON.parse(r.team_members)
+: r.team_members;
+total += m.length;
+}else{
+total++;
+}
+});
+
+html = `
+<div style="
+width:210mm;
+height:297mm;
+padding:25mm 20mm;
+border:2px solid #000;
+font-family:'Times New Roman';
+box-sizing:border-box;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+">
+
+<!-- HEADER -->
+<div style="text-align:center;">
+<h2 style="margin:0;font-size:20px;font-weight:bold;">
+Trisha Vidya College of Commerce & Management
+</h2>
+
+<p style="margin:3px 0;font-size:14px;">
+S.V.S Campus, Katapadi, Udupi
+</p>
+
+<div style="margin-top:15px;font-weight:bold;line-height:1.5;">
+<p>${c.club || "Cultural Club"}</p>
+<p>COMPETITION REPORT</p>
+<p>"${c.theme}"</p>
+</div>
+</div>
+
+<!-- CONTENT -->
+<div style="flex-grow:1;margin-top:50px;">
+
+<div style="
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+margin-bottom:25px;
+font-size:14px;
+">
+<div>DATE: ${formatDate(c.competitionDate)}</div>
+<div>VENUE: ${c.venue}</div>
+</div>
+
+<div style="font-size:14px;line-height:1.8;text-align:justify;">
+<p>
+An ${c.category || "Internal"} competition titled 
+"<b>${c.theme}</b>" was organized successfully.
+</p>
+
+<p><b>No. of Participants:</b> ${total}</p>
+<p><b>Faculty Coordinators:</b> ${c.facultyCoordinator || "-"}</p>
+<p><b>Student Coordinators:</b> ${c.studentCoordinator || "-"}</p>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div style="
+display:flex;
+justify-content:space-between;
+font-weight:bold;
+font-size:14px;
+margin-top:60px;
+">
+<div>Event Coordinator</div>
+<div>Principal</div>
+</div>
+
+</div>
+`;
+}
+
+html2pdf().set({
+margin:0,
+html2canvas:{ scale:3 },
+jsPDF:{
+unit:'mm',
+format:'a4',
+orientation:'portrait'
+}
+}).from(html).save("Report.pdf");
+}
+
+function formatDate(date){
+const d = new Date(date);
+return d.toLocaleDateString('en-GB');
+}
+
+</script>
+
+</body>
+</html>
